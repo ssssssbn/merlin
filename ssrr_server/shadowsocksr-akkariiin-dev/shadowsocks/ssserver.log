@@ -1,0 +1,7 @@
+2019-10-28 15:33:24 INFO     shell.py:74 ShadowsocksR SSRR 3.2.2 2018-05-22
+2019-10-28 15:33:24 INFO     server.py:48 current process RLIMIT_NOFILE resource: soft 1024 hard 1024
+2019-10-28 15:33:24 INFO     asyncdns.py:287 black_hostname_list init as : []
+2019-10-28 15:33:24 INFO     asyncdns.py:335 dns server: [('127.0.0.1', 53)]
+2019-10-28 15:33:24 INFO     server.py:108 server start with protocol[auth_chain_a] password [666666] method [none] obfs [http_simple] obfs_param []
+2019-10-28 15:33:24 INFO     server.py:125 starting server at [::]:1082
+2019-10-28 15:33:24 INFO     server.py:145 starting server at 0.0.0.0:1082

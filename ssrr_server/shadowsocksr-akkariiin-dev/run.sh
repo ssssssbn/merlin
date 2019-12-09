@@ -1,0 +1,4 @@
+#!/bin/sh
+cd $(dirname $0)/
+ulimit -HSn 65536
+nohup python server.py m >> /dev/null 2>&1 &
