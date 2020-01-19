@@ -9,10 +9,12 @@ pid=`ps|grep "server.py a"|grep -v grep|awk '{print $1}'`
 #pid_watchdog=`ps|grep ssrr_server_watchdog.sh|grep -v grep|awk '{print $1}'`
 ssrrserver_use_ss=1
 preport="-1"
-nextport=`cat $path/user-config.json|grep "server_port"|sed 's/\"server_port": //g'|sed 's/,//g'`
+nextport=`jq -r .server_port $path/user-config.json`
+#nextport=`cat $path/user-config.json|grep "server_port"|sed 's/\"server_port": //g'|sed 's/,//g'`
 echo next $nextport
-if [ -e $path/using-config.json ]; then
-	preport=`cat $path/using-config.json|grep "server_port"|sed 's/\"server_port": //g'|sed 's/,//g'`
+if [ -r $path/using-config.json ]; then
+	preport=`jq -r .server_port $path/using-config.json`
+	#preport=`cat $path/using-config.json|grep "server_port"|sed 's/\"server_port": //g'|sed 's/,//g'`
 echo pre $preport
 fi
 
@@ -97,20 +99,24 @@ open_port(){
 
 close_port(){
 	if [ -1 -ne $preport ] && [ "$pid" == "" ]; then
-		checkport=`iptables -nL|grep $preport`
+		checkport=`iptables -nL|grep dpt:$preport`
+#echo checkport4 = $checkport
 		while [ "$checkport" != "" ]
 		do
 		# -t filter
 			iptables -D INPUT -p tcp --dport $preport -j ACCEPT >/dev/null 2>&1
 			iptables -D INPUT -p udp --dport $preport -j ACCEPT >/dev/null 2>&1
-			checkport=`iptables -nL|grep $preport`
+			checkport=`iptables -nL|grep dpt:$preport`
+#echo checkport4 = $checkport
 		done
-		checkport=`ip6tables -nL|grep $preport`
+		checkport=`ip6tables -nL|grep dpt:$preport`
+#echo checkport6 = $checkport
 		while [ "$checkport" != "" ]
 		do
 			ip6tables -D INPUT -p tcp --dport $preport -j ACCEPT >/dev/null 2>&1
 			ip6tables -D INPUT -p udp --dport $preport -j ACCEPT >/dev/null 2>&1
-			checkport=`ip6tables -nL|grep $preport`
+			checkport=`ip6tables -nL|grep dpt:$preport`
+#echo checkport6 = $checkport
 		done
 	fi
 }
