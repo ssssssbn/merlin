@@ -42,10 +42,10 @@ cf_ipv4=""
 local_ipv6=""
 cf_ipv6=""
 
-cf_ipv4_key=$cfddns_root_domain_name.$cfddns_subdomain_name_prefix.A.content
-cf_ipv4_key=${cf_ipv4_key//./_}
-cf_ipv6_key=$cfddns_root_domain_name.$cfddns_subdomain_name_prefix.AAAA.content
-cf_ipv6_key=${cf_ipv6_key//./_}
+cf_ipv4_key="$cfddns_root_domain_name"'.'"$cfddns_subdomain_name_prefix"'.A.content'
+cf_ipv4_key="${cf_ipv4_key//./_}"
+cf_ipv6_key="$cfddns_root_domain_name"'.'"$cfddns_subdomain_name_prefix"'.AAAA.content'
+cf_ipv6_key="${cf_ipv6_key//./_}"
 
 cache=""
 if [ "$1" == "skip" ];then

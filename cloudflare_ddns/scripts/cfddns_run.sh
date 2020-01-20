@@ -3,7 +3,7 @@ tmp_dir='/tmp/Cloudflare'
 if [ ! -d $tmp_dir ];then
 	mkdir $tmp_dir
 fi
-LOCK_FILE="$tmp_dir/cfddns_run.lock"
+LOCK_FILE="$tmp_dir"'/cfddns_run.lock'
 if [ -f $LOCK_FILE ];then
 	i=0
 	for pid in `ps | grep -v grep | grep "$0" | awk '{print $1}'`
@@ -28,17 +28,17 @@ dir=$(dirname $0)
 cd $dir
 
 jq_path='/koolshare/bin/jq'
-LOG_FILE=$tmp_dir'/cfddns_log.log'
-STATUS_FILE=$tmp_dir'/cfddns_status.json'
-STATUS_FILE_SHOW=$tmp_dir'/cfddns_status_show.json'
-CACHE_FILE=$tmp_dir'/cfddns_cache'
+LOG_FILE="$tmp_dir"'/cfddns_log.log'
+STATUS_FILE="$tmp_dir"'/cfddns_status.json'
+STATUS_FILE_SHOW="$tmp_dir"'/cfddns_status_show.json'
+CACHE_FILE="$tmp_dir"'/cfddns_cache'
 readonly LOG_FILE
 readonly STATUS_FILE
 readonly STATUS_FILE_SHOW
 readonly CACHE_FILE
 
 if [ "$cfddns_enable" == "true" ];then
-	echo '' > $LOG_FILE
+	rm -rf $LOG_FILE
 fi
 
 echo_date '脚本运行，如需变更设置，请等待脚本运行完毕，否则变更可能不会生效！' >> $LOG_FILE
@@ -126,7 +126,7 @@ if [ "$cfddns_enable" == "true" ];then
 			fi
 #echo debug _cfddns_crontab_interval_min = "$_cfddns_crontab_interval_min" >> $LOG_FILE
 			
-			crontab_cmd="$_cfddns_crontab_interval_min $_cfddns_crontab_interval_hour $_cfddns_crontab_interval_day"' * * /koolshare/scripts/cfddns.sh start --jq='"$jq_path"' --config=/koolshare/configs/cfddns.json'
+			crontab_cmd="$_cfddns_crontab_interval_min $_cfddns_crontab_interval_hour $_cfddns_crontab_interval_day"' * * /koolshare/scripts/cfddns.sh start --jq='"$jq_path"' --config=/koolshare/configs/cfddns.json && /koolshare/scripts/cfddns_status.sh skip'
 #echo debug crontab_cmd = "$crontab_cmd" >> $LOG_FILE
 			if [ -z "$crontab_task" ];then
 				echo_date '添加Crontab定时任务，每'"$cfddns_crontab_interval_min"'分钟'"$cfddns_crontab_interval_hour"'小时'"$cfddns_crontab_interval_day"'天检测一次。' >> $LOG_FILE
@@ -161,7 +161,7 @@ if [ "$cfddns_enable" == "true" ];then
 		
 		if [ -z "$startup_cmd" ];then
 			echo_date '添加wan-start触发事件...用于程序的开机启动...' >> $LOG_FILE
-			sed -i '2a sh /koolshare/scripts/cfddns_run.sh startup --jq='"$jq_path"' --config=/koolshare/configs/cfddns.json &' /jffs/scripts/wan-start
+			sed -i '2a sh /koolshare/scripts/cfddns_run.sh startup --jq='"$jq_path"' --config=/koolshare/configs/cfddns.json && /koolshare/scripts/cfddns_status.sh skip &' /jffs/scripts/wan-start
 		else
 			echo_date '已添加wan-start触发事件...用于程序的开机启动...' >> $LOG_FILE
 		fi

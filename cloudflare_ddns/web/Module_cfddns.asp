@@ -775,7 +775,7 @@
 													</tr>
 												</thead>
 												<tr>
-													<th>启动Cfddns</th>
+													<th>启动CFDDNS</th>
 													<td colspan="2">
 														<div class="switch_field" style="display:table-cell;float: left;">
 															<label for="switch_main">
