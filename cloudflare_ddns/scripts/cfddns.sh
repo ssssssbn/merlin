@@ -38,7 +38,7 @@ do
 	esac
 done
 if [ -z "$CONFIG_FILE" ];then
-	CONFIG_FILE=$dir'/cfddns.json'
+	CONFIG_FILE="$dir"'/cfddns.json'
 fi
 readonly CONFIG_FILE
 
@@ -91,7 +91,7 @@ readonly number_regex
 
 
 # 设置信息
-STATUS_FILE=$tmp_dir'/cfddns_status.json'
+STATUS_FILE="$tmp_dir"'/cfddns_status.json'
 readonly STATUS_FILE
 just_get_status=false
 cfddns_status_cache=""
@@ -446,23 +446,33 @@ save_cache(){
 	if [ -z "$errors" ];then
 		errors="none"
 	fi
-	cfddns_cache='{'$cfddns_cache'}'
-	cfddns_status_cache='{'$cfddns_status_cache',"errors":"'$errors'","date":"'$(date +%YY%mM%dD\ %X)'"}'
-	cache_test=`echo "$cfddns_cache" | $jq_path -c .`
-	if [ -n "$cache_test" ];then
-		echo "$cfddns_cache" | $jq_path . > $CACHE_FILE
-	else
-		echo_date 'Content of "cache" is not in json format'
-		echo "$cfddns_cache"
+	if [ -n "$cfddns_cache" ];then
+		cfddns_cache='{'"$cfddns_cache"'}'
+		cache_test=`echo "$cfddns_cache" | $jq_path -c .`
+		if [ -n "$cache_test" ];then
+			echo "$cfddns_cache" | $jq_path . > $CACHE_FILE
+		else
+			echo_date 'Content of "cache" is not in json format'
+			echo "$cfddns_cache"
+		fi
 #echo 'debug '"$cfddns_cache"
-	fi
-	cache_test=`echo "$cfddns_status_cache" | $jq_path -c .`
-	if [ -n "$cache_test" ];then
-		echo "$cfddns_status_cache" | $jq_path . > $STATUS_FILE
 	else
-		echo '{"errors":"Content of "status" is not in json format, check log for details"}' > $STATUS_FILE
-		echo_date 'Content of "status" is not in json format'
-		echo "$cfddns_status_cache"
+		echo_date 'Content of "cache" is empty'
+		rm -rf $CACHE_FILE
+	fi
+	if [ -n "$cfddns_status_cache" ];then
+		cfddns_status_cache='{'"$cfddns_status_cache"',"errors":"'"$errors"'","date":"'$(date +%YY%mM%dD\ %X)'"}'
+		cache_test=`echo "$cfddns_status_cache" | $jq_path -c .`
+		if [ -n "$cache_test" ];then
+			echo "$cfddns_status_cache" | $jq_path . > $STATUS_FILE
+		else
+			echo '{"errors":"Content of "status" is not in json format, check log for details"}' > $STATUS_FILE
+			echo_date 'Content of "status" is not in json format'
+			echo "$cfddns_status_cache"
+		fi
+	else
+		echo_date 'Content of "status" is empty'
+		rm -rf $STATUS_FILE
 	fi
 }
 
@@ -1075,28 +1085,46 @@ delete_dns_record(){
 
 verify_user_info(){
 #echo 'debug enter verify_user_info'
-	if [ $verify_account -eq -1 ];then
-#echo 'debug enter verify_account'
-		get_user_detail
-		if [ $? -ne 0 ];then
-			return 1
+	for try_times in 0 1 2 3
+	do
+		if [ $try_times -gt 0 ];then
+			echo_date Retry in 10 seconds
+			sleep 10
+			echo_date Retry...$try_times
 		fi
-	fi
-	
-	return 0
+		
+		get_user_detail
+		res=$?
+		if [ $res -eq 0 ];then
+			return 0
+		elif [ $try_times -eq 3 ];then
+			return 1
+		elif [ -z "$result_json" ];then
+			continue
+		fi
+	done
 }
 
 verify_zone_info(){
 #echo 'debug enter verify_zone_info'
-	if [ $verify_zone -eq -1 ];then
-#echo 'debug enter verify_zone'
-		get_zone_detail
-		if [ $? -ne 0 ];then
-			return 1
+	for try_times in 0 1 2 3
+	do
+		if [ $try_times -gt 0 ];then
+			echo_date Retry in 10 seconds
+			sleep 10
+			echo_date Retry...$try_times
 		fi
-	fi
-	
-	return 0
+		
+		get_zone_detail
+		res=$?
+		if [ $res -eq 0 ];then
+			return 0
+		elif [ $try_times -eq 3 ];then
+			return 1
+		elif [ -z "$result_json" ];then
+			continue
+		fi
+	done
 }
 
 get_info(){
@@ -1562,36 +1590,50 @@ do_start(){
 							fi
 						fi
 						
-						update_dns_record
-						res=$?
-						if [ $res -ne 0 ];then
-							if [ -n "`echo "$result_errors" | grep "Invalid zone identifier"`" ];then
-								echo_date 'Zone id got from the cache is invalid, getting from Cloudflare and try again'
-								load_zone=-1
-								k=$(( $k - 1 ))
-#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
-								cfddns_last_cache=${cfddns_last_cache//$zone_id/}
-								cfddns_last_cache=${cfddns_last_cache//$dns_record_id/}
-#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
-								zone_id=""
-								cf_zone_id=""
-								dns_record_id=""
-								cf_record_id=""
-								result_errors=""
-								result_messages=""
-							elif [ -n "`echo "$result_errors" | grep "Invalid DNS record identifier"`" ];then
-								echo_date 'DNS record id got from the cache is invalid, getting from Cloudflare and try again'
-								k=$(( $k - 1 ))
-#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
-								cfddns_last_cache=${cfddns_last_cache//$dns_record_id/}
-#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
-								dns_record_id=""
-								cf_record_id=""
-								result_errors=""
-								result_messages=""
+						for try_times in 0 1 2 3
+						do
+							if [ $try_times -gt 0 ];then
+								echo_date Retry in 10 seconds
+								sleep 10
+								echo_date Retry...$try_times
 							fi
-							continue
-						fi
+							update_dns_record
+							res=$?
+							if [ $res -eq 0 ];then
+								break
+							else
+								if [ -z "$result_json" ];then
+									continue
+								elif [ -n "`echo "$result_errors" | grep "Invalid zone identifier"`" ];then
+									echo_date 'Zone id got from the cache is invalid, getting from Cloudflare and try again'
+									load_zone=-1
+									k=$(( $k - 1 ))
+	#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
+									cfddns_last_cache=${cfddns_last_cache//$zone_id/}
+									cfddns_last_cache=${cfddns_last_cache//$dns_record_id/}
+	#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
+									zone_id=""
+									cf_zone_id=""
+									dns_record_id=""
+									cf_record_id=""
+									result_errors=""
+									result_messages=""
+								elif [ -n "`echo "$result_errors" | grep "Invalid DNS record identifier"`" ];then
+									echo_date 'DNS record id got from the cache is invalid, getting from Cloudflare and try again'
+									k=$(( $k - 1 ))
+	#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
+									cfddns_last_cache=${cfddns_last_cache//$dns_record_id/}
+	#echo 'debug cfddns_last_cache = '"$cfddns_last_cache"
+									dns_record_id=""
+									cf_record_id=""
+									result_errors=""
+									result_messages=""
+								else
+									echo "$result_json"
+									break
+								fi
+							fi
+						done
 					else
 						echo_date 'No need to update type "'"$dns_record_type"'" records for "'"$dns_record_full_name"'"'
 					fi
@@ -1623,7 +1665,7 @@ do_stop(){
 		#echo "`eval $tmp_cmd1`"
 		for pid in `eval $tmp_cmd`
 		do
-			if [ $pid -lt $(( $$ - 1 )) ];then
+			if [ $pid -ne $$ ];then
 				echo_date 'kill pid '"$pid"
 				kill -9 $pid
 			fi
@@ -1638,11 +1680,14 @@ startup)
 	do_start >> $LOG_FILE
 	;;
 start)
-	do_stop >> $LOG_FILE
 	do_start >> $LOG_FILE
 	;;
 stop)
 	do_stop >> $LOG_FILE
+	;;
+restart)
+	do_stop >> $LOG_FILE
+	do_start >> $LOG_FILE
 	;;
 status)
 	just_get_status=true
