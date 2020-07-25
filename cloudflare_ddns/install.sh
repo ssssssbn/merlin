@@ -12,7 +12,7 @@ if [ $installed -eq 1 ];then
 	fi
 	# 关闭插件先
 	enable=`dbus get cfddns_enable`
-	if [ "$enable" == "true" ];then
+	if [ x"$enable" = x"true" ];then
 		echo_date '检测到CFDDNS已启动'
 		dbus set cfddns_enable=false
 		echo_date '停止CFDDNS'

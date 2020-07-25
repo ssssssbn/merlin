@@ -25,7 +25,7 @@ dir=$(dirname $0)
 cd $dir
 
 
-jq_path='/koolshare/bin/jq'
+jq_path="`which jq`"
 LOG_FILE="$tmp_dir"'/cfddns_log.log'
 STATUS_FILE="$tmp_dir"'/cfddns_status.json'
 STATUS_FILE_SHOW="$tmp_dir"'/cfddns_status_show.json'
@@ -34,6 +34,12 @@ readonly LOG_FILE
 readonly STATUS_FILE
 readonly STATUS_FILE_SHOW
 readonly CFDDNS_CACHE_FILE
+
+if [ -z "$jq_path" ];then
+	echo_date '缺少依赖包"jq"'
+	rm -rf $LOCK_FILE
+	exit 0
+fi
 
 errors=""
 
@@ -48,7 +54,7 @@ cf_ipv6_key="$cfddns_root_domain_name"'.'"$cfddns_subdomain_name_prefix"'.AAAA.c
 cf_ipv6_key="${cf_ipv6_key//./_}"
 
 cache=""
-if [ "$1" == "skip" ];then
+if [ x"$1" = x"skip" ];then
 #echo 'debug skip' >> $LOG_FILE
 	cache=`$jq_path -c . $CFDDNS_CACHE_FILE`
 else
@@ -66,11 +72,11 @@ if [ -z "$cache" ];then
 	exit 0
 fi
 errors=`echo "$cache" | $jq_path -r .errors`
-if [ "$errors" == "null" ];then
+if [ x"$errors" = x"null" ];then
 	errors="none"
 fi
 #echo 'debug errors = '"$errors" >> $LOG_FILE
-if [ "$errors" != "none" ];then
+if [ x"$errors" != x"none" ];then
 #echo 'debug errors' >> $LOG_FILE
 	cat > $STATUS_FILE_SHOW <<-EOF
 	{"error":"$errors","date":"$(date +%Y年%m月%d日\ %X)"}
@@ -79,12 +85,12 @@ if [ "$errors" != "none" ];then
 	exit 0
 fi
 
-if [ "$cfddns_update_object" == "ipv4" ];then
+if [ x"$cfddns_update_object" = x"ipv4" ];then
 	local_ipv4=`echo "$cache" | $jq_path -r .local_ipv4`
 	cf_ipv4=`echo "$cache" | $jq_path -r .$cf_ipv4_key`
 	local_ipv6="未启用"
 	cf_ipv6="未启用"
-elif [ "$cfddns_update_object" == "ipv6" ];then
+elif [ x"$cfddns_update_object" = x"ipv6" ];then
 	local_ipv4="未启用"
 	cf_ipv4="未启用"
 	local_ipv6=`echo "$cache" | $jq_path -r .local_ipv6`

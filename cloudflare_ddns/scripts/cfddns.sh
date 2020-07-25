@@ -1,5 +1,9 @@
 #!/bin/sh
-alias echo_date='echo $(date +%Y年%m月%d日\ %X): '
+#alias echo_date='echo $(date +%Y年%m月%d日\ %X): '
+echo_date(){
+#echo 'debug enter echo_date'
+	echo "$(date +%Y年%m月%d日\ %X): $1"
+}
 dir=$(dirname $0)
 
 jq_path=""
@@ -8,7 +12,7 @@ for opt in $*
 do
 	tmp=${opt:0:2}
 #echo 'debug tmp = '"$tmp"
-	if [ "$tmp" != "--" ];then
+	if [ x"$tmp" != x"--" ];then
 		continue
 	fi
 	key=`echo "$opt" | awk -F= '{print $1}'`
@@ -55,7 +59,7 @@ fi
 readonly jq_path
 #_pid=$$
 process_list_cmd=""
-if [ "`ps | awk 'NR==1{print $2}' | tr [a-z] [A-Z]`" == "TTY" ];then
+if [ x"`ps | awk 'NR==1{print $2}' | tr [a-z] [A-Z]`" = x"TTY" ];then
 	process_list_cmd='ps -ef'
 else
 	process_list_cmd='ps'
@@ -65,7 +69,7 @@ i=0
 for str in `$process_list_cmd | awk 'NR==1'`
 do
 	i=$(( $i + 1 ))
-	if [ `echo "$str" | tr [a-z] [A-Z]` == "PID" ];then
+	if [ x"`echo "$str" | tr [a-z] [A-Z]`" = x"PID" ];then
 		pid_col=$i
 echo_date 'pid in column '"$pid_col" >> $LOG_FILE
 		break;
@@ -251,7 +255,7 @@ load_config(){
 	
 #echo 'debug load_config chk_user'
 	chk_user=`echo "$cfddns_config" | $jq_path -c .user`
-	if [ -z "$chk_user" -o "$chk_user" == "null" ];then
+	if [ -z "$chk_user" -o x"$chk_user" = x"null" ];then
 		echo_date 'Configuration error, must contain "user" group and "user" group contains an "email" field with a value and a "global_api_key" field with a value'
 		return 1
 	fi
@@ -259,7 +263,7 @@ load_config(){
 	
 #echo 'debug load_config user_email'
 	user_email=`echo "$chk_user" | $jq_path -r .email | grep -oE "$email_regex"`
-	if [ -z "$user_email" -o "$user_email" == "null" ];then
+	if [ -z "$user_email" -o x"$user_email" = x"null" ];then
 		echo_date '"user_email" is REQUIRED, but is empty or non-email format!'
 		return 1
 	fi
@@ -267,7 +271,7 @@ load_config(){
 	
 #echo 'debug load_config global_api_key'
 	global_api_key=`echo "$chk_user" | $jq_path -r .global_api_key`
-	if [ -z "$global_api_key" -o "$global_api_key" == "null" ];then
+	if [ -z "$global_api_key" -o x"$global_api_key" = x"null" ];then
 		echo_date '"global_api_key" is REQUIRED!'
 		return 1
 	fi
@@ -275,7 +279,7 @@ load_config(){
 	
 #echo 'debug load_config chk_domains'
 	chk_domains=`echo "$cfddns_config" | $jq_path -c .domains`
-	if [ -z "$chk_domains" -o "$chk_domains" == "null" ];then
+	if [ -z "$chk_domains" -o x"$chk_domains" = x"null" ];then
 		echo_date 'Configuration error, must contain a "domains" array field with at least a group which contains a "root_domain_name" field with value and a "hosts" array field with at least a group which must contain a "subdomain_name_prefix" field with value and a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_domains = '"$chk_domains"
 		return 1
@@ -289,18 +293,18 @@ load_config(){
 #echo 'debug load_config i = '"$i"
 #echo 'debug load_config chk_domain'
 		chk_domain=`echo "$cfddns_config" | $jq_path -c .domains[$i]`
-		if [ $i -eq 0 -a "$chk_domain" == "null" ];then
+		if [ $i -eq 0 -a x"$chk_domain" = x"null" ];then
 			echo_date 'Configuration error, must contain at least a group which contains a "root_domain_name" field with value and a "hosts" array field with at least a group which must contain a "subdomain_name_prefix" field with value and a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_domain = '"$chk_domain"
 			return 1
 		fi
 #echo 'debug load_config chk_domain = '"$chk_domain"
-		if [ -z "$chk_domain" -o "$chk_domain" == "null" ];then
+		if [ -z "$chk_domain" -o x"$chk_domain" = x"null" ];then
 			break
 		fi
 #echo 'debug load_config chk_root_domain_name'
 		chk_root_domain_name=`echo "$chk_domain" | $jq_path -r .root_domain_name`
-		if [ -z "$chk_root_domain_name" -o "$chk_root_domain_name" == "null" ];then
+		if [ -z "$chk_root_domain_name" -o x"$chk_root_domain_name" = x"null" ];then
 			echo_date 'Configuration error, must contain "root_domain_name" field with value'
 #echo 'debug chk_root_domain_name = '"$chk_root_domain_name"
 			return 1
@@ -309,7 +313,7 @@ load_config(){
 
 #echo 'debug load_config chk_hosts'
 		chk_hosts=`echo "$chk_domain" | $jq_path -c .hosts`
-		if [ -z "$chk_hosts" -o "$chk_hosts" == "null" ];then
+		if [ -z "$chk_hosts" -o x"$chk_hosts" = x"null" ];then
 			echo_date 'Configuration error, must contain a "hosts" array field with at least a group which must contain a "subdomain_name_prefix" field with value and a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_hosts = '"$chk_hosts"
 			return 1
@@ -322,18 +326,18 @@ load_config(){
 #echo 'debug load_config j = '"$j"
 #echo 'debug load_config chk_host'
 			chk_host=`echo "$chk_domain" | $jq_path -c .hosts[$j]`
-			if [ $j -eq 0 -a "$chk_host" == "null" ];then
+			if [ $j -eq 0 -a x"$chk_host" = x"null" ];then
 				echo_date 'Configuration error, must contain at least a group which must contain a "subdomain_name_prefix" field with value and a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_host = '"$chk_host"
 				return 1
 			fi
 #echo 'debug load_config chk_host = '"$chk_host"
-			if [ -z "$chk_host" -o "$chk_host" == "null" ];then
+			if [ -z "$chk_host" -o x"$chk_host" = x"null" ];then
 				break
 			fi
 #echo 'debug load_config chk_subdomain_name_prefix'
 			chk_subdomain_name_prefix=`echo "$chk_host" | $jq_path -r .subdomain_name_prefix`
-			if [ "$chk_subdomain_name_prefix" == "null" ];then
+			if [ x"$chk_subdomain_name_prefix" = x"null" ];then
 				echo_date 'Configuration error, must contain a "subdomain_name_prefix" field'
 #echo 'debug chk_subdomain_name_prefix = '"$chk_subdomain_name_prefix"
 				return 1
@@ -341,7 +345,7 @@ load_config(){
 #echo 'debug load_config chk_subdomain_name_prefix = '"$chk_subdomain_name_prefix"
 #echo 'debug load_config chk_records'
 			chk_records=`echo "$chk_host" | $jq_path -c .records`
-			if [ -z "$chk_records" -o "$chk_records" == "null" ];then
+			if [ -z "$chk_records" -o x"$chk_records" = x"null" ];then
 				echo_date 'Configuration error, must contain a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_records = '"$chk_records"
 				return 1
@@ -354,18 +358,18 @@ load_config(){
 #echo 'debug load_config k = '"$k"
 #echo 'debug load_config chk_record'
 				chk_record=`echo "$chk_host" | $jq_path -c .records[$k]`
-				if [ $k -eq 0 -a "$chk_record" == "null" ];then
+				if [ $k -eq 0 -a x"$chk_record" = x"null" ];then
 					echo_date 'Configuration error, must contain a "records" array field with at least a group which must contain a "type" field with value, a "ttl" field with value and a "proxied" field with value'
 #echo 'debug chk_record = '"$chk_record"
 					return 1
 				fi
 #echo 'debug load_config chk_record = '"$chk_record"
-				if [ -z "$chk_record" -o "$chk_record" == "null" ];then
+				if [ -z "$chk_record" -o x"$chk_record" = x"null" ];then
 					break
 				fi
 #echo 'debug load_config chk_type'
 				chk_field=`echo "$chk_record" | $jq_path -r .type`
-				if [ -z "$chk_field" -o "$chk_field" == "null" ];then
+				if [ -z "$chk_field" -o x"$chk_field" = x"null" ];then
 					echo_date 'Configuration error, must contain a "type" field with value'
 #echo 'debug chk_field = '"$chk_field"
 					return 1
@@ -373,7 +377,7 @@ load_config(){
 #echo 'debug load_config chk_type = '"$chk_field"
 #echo 'debug load_config chk_ttl'
 				chk_field=`echo "$chk_record" | $jq_path -r .ttl`
-				if [ -z "$chk_field" -o "$chk_field" == "null" ];then
+				if [ -z "$chk_field" -o x"$chk_field" = x"null" ];then
 					echo_date 'Configuration error, must contain a "ttl" field with value'
 #echo 'debug chk_field = '"$chk_field"
 					return 1
@@ -381,7 +385,7 @@ load_config(){
 #echo 'debug load_config chk_ttl = '"$chk_field"
 #echo 'debug load_config chk_proxied'
 				chk_field=`echo "$chk_record" | $jq_path -r .proxied`
-				if [ -z "$chk_field" -o "$chk_field" == "null" ];then
+				if [ -z "$chk_field" -o x"$chk_field" = x"null" ];then
 					echo_date 'Configuration error, must contain a "proxied" field with value'
 #echo 'debug chk_field = '"$chk_field"
 					return 1
@@ -418,7 +422,7 @@ load_config(){
 	
 #echo 'debug load_config chk_interval'
 	check_interval=`echo "$cfddns_config" | $jq_path -r .check_interval | grep -oE "$number_regex"`
-	if [ -z "$check_interval" -o "$check_interval" == "null" ];then
+	if [ -z "$check_interval" -o x"$check_interval" = x"null" ];then
 		check_interval=0
 	fi
 #echo 'debug load_config chk_interval = '"$check_interval"
@@ -428,7 +432,7 @@ load_config(){
 		if [ -n "$cfddns_last_cache" ];then
 #echo 'debug load_config cfddns_cache ok'
 			chk_email=`echo "$cfddns_last_cache" | $jq_path -r .email`
-			if [ -z "$chk_email" -o "$chk_email" == "null" -o "$user_email" != "$chk_email" ];then
+			if [ -z "$chk_email" -o x"$chk_email" = x"null" -o x"$user_email" != x"$chk_email" ];then
 				verify_account=-1
 				cfddns_last_cache=""
 			fi
@@ -448,7 +452,7 @@ save_cache(){
 	fi
 	if [ -n "$cfddns_cache" ];then
 		cfddns_cache='{'"$cfddns_cache"'}'
-		cache_test=`echo "$cfddns_cache" | $jq_path -c .`
+		cache_test="`echo "$cfddns_cache" | $jq_path -c .`"
 		if [ -n "$cache_test" ];then
 			echo "$cfddns_cache" | $jq_path . > $CACHE_FILE
 		else
@@ -461,8 +465,8 @@ save_cache(){
 		rm -rf $CACHE_FILE
 	fi
 	if [ -n "$cfddns_status_cache" ];then
-		cfddns_status_cache='{'"$cfddns_status_cache"',"errors":"'"$errors"'","date":"'$(date +%YY%mM%dD\ %X)'"}'
-		cache_test=`echo "$cfddns_status_cache" | $jq_path -c .`
+		cfddns_status_cache='{'"$cfddns_status_cache"',"errors":"'"$errors"'","date":"'"$(date +%Y年%m月%d日\ %X)"'"}'
+		cache_test="`echo "$cfddns_status_cache" | $jq_path -c .`"
 		if [ -n "$cache_test" ];then
 			echo "$cfddns_status_cache" | $jq_path . > $STATUS_FILE
 		else
@@ -486,7 +490,7 @@ load_cache(){ # $1=reference $2=key
 	key=${2//./_}
 	value=`echo "$cfddns_last_cache" | $jq_path -r .$key`
 #echo 'debug load_cache refer = '"$refer" "$key" = "$value"
-	if [ -n "$value" -a "$value" != "null" ];then
+	if [ -n "$value" -a x"$value" != x"null" ];then
 		eval $refer=$value
 #echo 'debug load_cache final y '"$refer"' = '"$value"
 		return 0
@@ -507,7 +511,7 @@ save_to_cache(){ # $1=key $2=value
 	fi
 	stc_key_word=`echo "$key" | awk -F_ '{print $5}'`
 #echo 'debug stc_key_word = '"$stc_key_word"
-	if [ "$stc_key_word" == "ttl" -o "$stc_key_word" == "proxied" ];then
+	if [ x"$stc_key_word" = x"ttl" -o x"$stc_key_word" = x"proxied" ];then
 		cfddns_cache=$cfddns_cache'"'$key'":'$value
 	else
 		cfddns_cache=$cfddns_cache'"'$key'":"'$value'"'
@@ -525,7 +529,7 @@ save_to_status_cache(){ # $1=key $2=value
 	fi
 	stc_key_word=`echo "$key" | awk -F_ '{print $5}'`
 #echo 'debug stc_key_word = '"$stc_key_word"
-	if [ "$stc_key_word" == "ttl" -o "$stc_key_word" == "proxied" ];then
+	if [ x"$stc_key_word" = x"ttl" -o x"$stc_key_word" = x"proxied" ];then
 		cfddns_status_cache="$cfddns_status_cache"'"'"$key"'":'"$value"
 	else
 		cfddns_status_cache="$cfddns_status_cache"'"'"$key"'":"'"$value"'"'
@@ -793,7 +797,7 @@ get_user_detail(){
 	echo_date 'Verifying user account'
 	result_json=`api_get_user_detail | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		verify_account=1
 		echo_date 'Succeed to verify user account'
 		return 0
@@ -818,7 +822,7 @@ get_zone_detail(){
 	echo_date 'Verifying zone("'"$zone_name"'")'
 	result_json=`api_get_zone_detail | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		verify_zone=1
 		echo_date 'Succeed to verify zone("'"$zone_name"'")'
 		return 0
@@ -841,7 +845,7 @@ get_zone(){
 	echo_date 'Getting zone("'"$zone_name"'")'
 	result_json=`api_get_zone | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		zone_count=`echo "$result_json" | $jq_path -r .result_info.total_count`
 		if [ $zone_count -eq 1 ];then
 			zone_id=`echo "$result_json" | $jq_path -r .result[0].id`
@@ -852,8 +856,7 @@ get_zone(){
 			return 0
 		elif [ $zone_count -eq 0 ];then
 			echo_date 'Zone("'"$zone_name"'") no found'
-			save_errors 'Zone("'"$zone_name"'") no found'
-			if [ "$just_get_status" == "true" ];then
+			if [ x"$just_get_status" = x"true" ];then
 				return 1
 			fi
 			return 2
@@ -879,7 +882,7 @@ create_zone(){
 	echo_date 'Creating zone("'"$zone_name"'")'
 	result_json=`api_create_zone | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		zone_id=`echo "$result_json" | $jq_path -r .result.id`
 		cf_zone_id=$zone_id
 #echo 'debug zone_id = '"$zone_id"
@@ -908,7 +911,7 @@ delete_zone(){
 	echo_date 'Deleting zone("'"$zone_name"'")'
 	result_json=`api_delete_zone | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		zone_id=""
 		cfddns_zone_id=""
 		echo_date 'Succeed to delete zone("'"$zone_name"'")'
@@ -934,7 +937,7 @@ get_dns_record(){
 	echo_date 'Getting DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'")'
 	result_json=`api_get_dns_record | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		total_count=`echo "$result_json" | $jq_path -r .result_info.total_count`
 		if [ $total_count -gt 0 ];then
 			cf_record_id=`echo "$result_json" | $jq_path -r .result[0].id`
@@ -950,21 +953,20 @@ get_dns_record(){
 			if [ $total_count -eq 1 ];then
 				echo_date 'Succeed to get DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$cf_record_content"'", ttl="'"$cf_record_ttl"'", proxied="'"$cf_record_proxied"'")'
 				return 0
-			elif [ "$auto_delete_redundant_records" == "false" ];then
+			elif [ x"$auto_delete_redundant_records" = x"false" ];then
 				echo_date 'Type "'"$dns_record_type"'" DNS record of "'"$dns_record_full_name"'" is not unique, and the option "auto_delete_redundant_records" is "false", using the first DNS record'
 				echo_date 'Succeed to get DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$cf_record_content"'", ttl="'"$cf_record_ttl"'", proxied="'"$cf_record_proxied"'")'
 				return 0
 			else
 				save_errors 'Type "'"$dns_record_type"'" DNS record of "'"$dns_record_full_name"'" is not unique'
-				if [ "$just_get_status" == "true" ];then
+				if [ x"$just_get_status" = x"true" ];then
 					return 1
 				fi
 				return 3
 			fi
 		else
 			echo_date 'DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'") no found'
-			save_errors 'DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'") no found'
-			if [ "$just_get_status" == "true" ];then
+			if [ x"$just_get_status" = x"true" ];then
 				return 1
 			fi
 			return 2
@@ -977,7 +979,7 @@ get_dns_record(){
 		echo_date 'messages:'
 		echo "$result_json" | $jq_path .messages
 		echo_date 'Failed to get DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'")'
-		save_errors 'Failed to get DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'"), check log for details'
+		save_errors 'Failed to get DNS record, check log for details'
 		return 1
 	fi
 }
@@ -995,7 +997,7 @@ update_dns_record(){
 	echo_date 'Updating DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$cf_record_content"'", ttl="'"$cf_record_ttl"'", proxied="'"$cf_record_proxied"'")'
 	result_json=`api_update_dns_record | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		echo_date 'Succeed to update DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$cf_record_content"'", ttl="'"$cf_record_ttl"'", proxied="'"$cf_record_proxied"'")'
 		echo_date '--to DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$dns_record_content"'", ttl="'"$dns_record_ttl"'", proxied="'"$dns_record_proxied"'")'
 		cf_record_content=$dns_record_content
@@ -1029,7 +1031,7 @@ create_dns_record(){
 	echo_date 'Creating DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", ttl="'"$dns_record_ttl"'", proxied="'"$dns_record_proxied"'")'
 	result_json=`api_create_dns_record | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		dns_record_id=`echo "$result_json" | $jq_path -r .result.id`
 		cf_record_id=$dns_record_id
 		cf_record_type=$dns_record_type
@@ -1066,7 +1068,7 @@ delete_dns_record(){
 	echo_date 'Deleting DNS record(id="'"$dns_record_id"'", type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$dns_record_content"'", ttl="'"$dns_record_ttl"'", proxied="'"$dns_record_proxied"'")'
 	delete_record_json=`api_delete_dns_record | $jq_path -c .`
 #echo "$result_json" | $jq_path .
-	if [ -n "$result_json" -a "`echo "$result_json" | $jq_path -r .success`" == "true" ];then
+	if [ -n "$result_json" -a x"`echo "$result_json" | $jq_path -r .success`" = x"true" ];then
 		dns_record_id=""
 		echo_date 'Succeed to delete DNS record(id="'"$dns_record_id"'", type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", content="'"$dns_record_content"'", ttl="'"$dns_record_ttl"'", proxied="'"$dns_record_proxied"'")'
 		return 0
@@ -1088,9 +1090,9 @@ verify_user_info(){
 	for try_times in 0 1 2 3
 	do
 		if [ $try_times -gt 0 ];then
-			echo_date Retry in 10 seconds
+			echo_date 'Retry in 10 seconds'
 			sleep 10
-			echo_date Retry...$try_times
+			echo_date 'Retry...'"$try_times"
 		fi
 		
 		get_user_detail
@@ -1110,9 +1112,9 @@ verify_zone_info(){
 	for try_times in 0 1 2 3
 	do
 		if [ $try_times -gt 0 ];then
-			echo_date Retry in 10 seconds
+			echo_date 'Retry in 10 seconds'
 			sleep 10
-			echo_date Retry...$try_times
+			echo_date 'Retry...'"$try_times"
 		fi
 		
 		get_zone_detail
@@ -1135,9 +1137,9 @@ get_info(){
 		for try_times in 0 1 2 3
 		do
 			if [ $try_times -gt 0 ];then
-				echo_date Retry in 10 seconds
+				echo_date 'Retry in 10 seconds'
 				sleep 10
-				echo_date Retry...$try_times
+				echo_date 'Retry...'"$try_times"
 			fi
 			
 			get_zone
@@ -1148,8 +1150,8 @@ get_info(){
 				save_to_cache "$zone_name.id" "$zone_id"
 				break
 			elif [ $res -eq 2 ];then
-				if [ "$auto_create_zone" == "true" ];then
-					echo_date The option \"auto_create_zone\" is \"true\", creating zone\(\"$zone_name\"\)
+				if [ x"$auto_create_zone" = x"true" ];then
+					echo_date 'The option "auto_create_zone" is "true", creating zone("'"$zone_name"'")'
 					create_zone
 					if [ $? -ne 0 ];then
 						load_zone=0
@@ -1161,7 +1163,7 @@ get_info(){
 					res=0
 					break
 				else
-					echo_date The option \"auto_create_zone\" is \"false\", skipping updating DNS records of zone\(\"$zone_name\"\)
+					echo_date 'The option "auto_create_zone" is "false", skipping updating DNS records of zone("'"$zone_name"'")'
 					load_zone=0
 					return 1
 				fi
@@ -1180,9 +1182,9 @@ get_info(){
 		for try_times in 0 1 2 3
 		do
 			if [ $try_times -gt 0 ];then
-				echo_date Retry in 10 seconds
+				echo_date 'Retry in 10 seconds'
 				sleep 10
-				echo_date Retry...$try_times
+				echo_date 'Retry...'"$try_times"
 			fi
 			
 			get_dns_record
@@ -1191,8 +1193,8 @@ get_info(){
 				load_dns_record=1
 				break
 			elif [ $res -eq 2 ];then
-				if [ "$auto_create_record" == "true" ];then
-					echo_date The option \"auto_create_record\" is \"true\", creating DNS record\(type=\"$dns_record_type\", name=\"$dns_record_full_name\", ttl=\"$dns_record_ttl\", proxied=\"$dns_record_proxied\"\) for zone\(\"$zone_name\"\)
+				if [ x"$auto_create_record" = x"true" ];then
+					echo_date 'The option "auto_create_record" is "true", creating DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'", ttl="'"$dns_record_ttl"'", proxied="'"$dns_record_proxied"'") for zone("'"$zone_name"'")'
 					create_dns_record
 					if [ $? -ne 0 ];then
 						load_dns_record=0
@@ -1201,12 +1203,12 @@ get_info(){
 					load_dns_record=1
 					return 2
 				else
-					echo_date The option \"auto_create_record\" is \"false\", skipping updating DNS record\(type=\"$dns_record_type\", name=\"$dns_record_full_name\"\) for zone\(\"$zone_name\"\)
+					echo_date 'The option "auto_create_record" is "false", skipping updating DNS record(type="'"$dns_record_type"'", name="'"$dns_record_full_name"'") for zone("'"$zone_name"'")'
 					load_dns_record=0
 					return 1
 				fi
 			elif [ $res -eq 3 ];then
-				echo_date Type \"$dns_record_type\" DNS record of \"$dns_record_full_name\" is not unique, and the option \"auto_delete_redundant_records\" is \"true\", using the first DNS record, deleting others
+				echo_date 'Type "'"$dns_record_type"'" DNS record of "'"$dns_record_full_name"'" is not unique, and the option "auto_delete_redundant_records" is "true", using the first DNS record, deleting others'
 				tmp_record_content=$dns_record_content
 				tmp_record_ttl=$dns_record_ttl
 				tmp_record_proxied=$dns_record_proxied
@@ -1215,7 +1217,7 @@ get_info(){
 				do
 					i=$(( $i + 1 ))
 					tmp_record_info=`echo "$result_json" | $jq_path -c .result[$i]`
-					if [ -z "$tmp_record_info" -o "$tmp_record_info" == "null" ];then
+					if [ -z "$tmp_record_info" -o x"$tmp_record_info" = x"null" ];then
 						if [ $i -gt 1 ];then
 							dns_record_id=`echo "$result_json" | $jq_path -r .result[0].id`
 							dns_record_content=$tmp_record_content
@@ -1245,56 +1247,6 @@ get_info(){
 }
 
 
-	#cat > $STATUS_FILE <<-EOF
-	#{"local_ipv4":"$local_ipv4","cf_ipv4":"$cf_ipv4","local_ipv6":"$local_ipv6","cf_ipv6":"$cf_ipv6","error":"none","date":"$(date +%Y年%m月%d日\ %X)"}
-	#EOF
-
-get_status(){
-	rm -rf $STATUS_FILE
-	if [ "$cfddns_update_object" == "both" ]; then
-		get_local_ipv4
-		if [ "$local_ipv4" == "" ];then
-			local_ipv4=获取失败
-		fi
-		get_cf_ipv4
-		if [ "$cf_ipv4" == "" ];then
-			cf_ipv4=获取失败
-		fi
-		get_local_ipv6
-		if [ "$local_ipv6" == "" ];then
-			local_ipv6=获取失败
-		fi
-		get_cf_ipv6
-		if [ "$cf_ipv6" == "" ];then
-			cf_ipv6=获取失败
-		fi
-	elif [ "$cfddns_update_object" == "ipv4" ]; then
-		get_local_ipv4
-		if [ "$local_ipv4" == "" ];then
-			local_ipv4=获取失败
-		fi
-		get_cf_ipv4
-		if [ "$cf_ipv4" == "" ];then
-			cf_ipv4=获取失败
-		fi
-		local_ipv6=未启用
-		cf_ipv6=未启用
-	elif [ "$cfddns_update_object" == "ipv6" ]; then
-		get_local_ipv6
-		if [ "$local_ipv6" == "" ];then
-			local_ipv6=获取失败
-		fi
-		get_cf_ipv6
-		if [ "$cf_ipv6" == "" ];then
-			cf_ipv6=获取失败
-		fi
-		local_ipv4=未启用
-		cf_ipv4=未启用
-	fi
-	cat > $STATUS_FILE <<-EOF
-	{"local_ipv4":"$local_ipv4","cf_ipv4":"$cf_ipv4","local_ipv6":"$local_ipv6","cf_ipv6":"$cf_ipv6","error":"none","date":"$(date +%Y年%m月%d日\ %X)"}
-	EOF
-}
 
 # 执行更新
 do_start(){
@@ -1327,26 +1279,26 @@ do_start(){
 			exit 1
 		fi
 		save_to_cache email "$user_email"
-		if [ "$just_get_status" == "false" ];then
+		if [ x"$just_get_status" = x"false" ];then
 			
 			g_auto_create_zone=`echo "$cfddns_config" | $jq_path -r .auto_create_zone`
-			if [ "$g_auto_create_zone" != "false" ];then
+			if [ x"$g_auto_create_zone" != x"false" ];then
 				g_auto_create_zone=true
 			fi
 			g_zone_jump_start=`echo "$cfddns_config" | $jq_path -r .auto_create_zone_jump_start`
-			if [ "$g_zone_jump_start" != "true" ];then
+			if [ x"$g_zone_jump_start" != x"true" ];then
 				g_zone_jump_start=false
 			fi
 			g_zone_type=`echo "$cfddns_config" | $jq_path -r .auto_create_zone_type`
-			if [ "$g_zone_type" != "partial" ];then
+			if [ x"$g_zone_type" != x"partial" ];then
 				g_zone_type=full
 			fi
 			g_auto_create_record=`echo "$cfddns_config" | $jq_path -r .auto_create_record`
-			if [ "$g_auto_create_record" != "false" ];then
+			if [ x"$g_auto_create_record" != x"false" ];then
 				g_auto_create_record=true
 			fi
 			g_auto_delete_redundant_records=`echo "$cfddns_config" | $jq_path -r .auto_delete_redundant_records`
-			if [ "$g_auto_delete_redundant_records" != "true" ];then
+			if [ x"$g_auto_delete_redundant_records" != x"true" ];then
 				g_auto_delete_redundant_records=false
 			fi
 		fi
@@ -1362,7 +1314,7 @@ do_start(){
 #echo 'debug i = '"$i"
 			load_zone=-1
 			tmp_domain=`echo "$cfddns_config" | $jq_path -c .domains[$i]`
-			if [ -z "$tmp_domain" -o "$tmp_domain" == "null" ];then
+			if [ -z "$tmp_domain" -o x"$tmp_domain" = x"null" ];then
 				break
 			fi
 #echo 'debug enter domains loop'
@@ -1370,23 +1322,23 @@ do_start(){
 			verify_zone=-1
 			zone_name=`echo "$tmp_domain" | $jq_path -r .root_domain_name`
 			
-			if [ "$just_get_status" == "false" ];then
+			if [ x"$just_get_status" = x"false" ];then
 				auto_create_zone=`echo "$tmp_domain" | $jq_path -r .auto_create_zone`
-				if [ "$auto_create_zone" == "null" ];then
+				if [ x"$auto_create_zone" = x"null" ];then
 					auto_create_zone=$g_auto_create_zone
-				elif [ "$auto_create_zone" != "false" ];then
+				elif [ x"$auto_create_zone" != x"false" ];then
 					auto_create_zone=true
 				fi
 				zone_jump_start=`echo "$tmp_domain" | $jq_path -r .auto_create_zone_jump_start`
-				if [ "$zone_jump_start" == "null" ];then
+				if [ x"$zone_jump_start" = x"null" ];then
 					zone_jump_start=g_zone_jump_start
-				elif [ "$zone_jump_start" != "true" ];then
+				elif [ x"$zone_jump_start" != x"true" ];then
 					zone_jump_start=false
 				fi
 				zone_type=`echo "$tmp_domain" | $jq_path -r .auto_create_zone_type`
-				if [ "$zone_type" == "null" ];then
+				if [ x"$zone_type" = x"null" ];then
 					zone_type=$g_zone_type
-				elif [ "$zone_type" != "partial" ];then
+				elif [ x"$zone_type" != x"partial" ];then
 					zone_type=full
 				fi
 			fi
@@ -1394,7 +1346,7 @@ do_start(){
 			if [ -n "$zone_name" ];then
 				load_cache zone_id $zone_name.id
 				res=$?
-				if [ $res -eq 0 -a "$just_get_status" == "false" ];then
+				if [ $res -eq 0 -a x"$just_get_status" = x"false" ];then
 					load_zone=1
 					cf_zone_id=$zone_id
 					save_to_cache "$zone_name.id" "$zone_id"
@@ -1415,7 +1367,7 @@ do_start(){
 				j=$(( $j + 1 ))
 #echo 'debug j = '"$j"
 				tmp_host=`echo "$tmp_domain" | $jq_path -c .hosts[$j]`
-				if [ -z "$tmp_host" -o "$tmp_host" == "null" ];then
+				if [ -z "$tmp_host" -o x"$tmp_host" = x"null" ];then
 					break
 				fi
 				dns_record_name_prefix=`echo "$tmp_host" | $jq_path -r .subdomain_name_prefix`
@@ -1440,23 +1392,23 @@ do_start(){
 #echo 'debug k = '"$k"
 					load_dns_record=-1
 					tmp_record=`echo "$tmp_host" | $jq_path -c .records[$k]`
-					if [ -z "$tmp_record" -o "$tmp_record" == "null" ];then
+					if [ -z "$tmp_record" -o x"$tmp_record" = x"null" ];then
 						break
 					fi
 #echo 'debug enter dns record loop'
 					dns_record_type=`echo "$tmp_record" | $jq_path -r .type`
-					if [ "$dns_record_type" == "A" ];then
+					if [ x"$dns_record_type" = x"A" ];then
 						if [ $try_get_ipv4 -eq 0 ];then
 							get_local_ip 4
 							res=$?
-							if [ "$just_get_status" == "false" ];then
+							if [ x"$just_get_status" = x"false" ];then
 								if [ $res -ne 0 ];then
 									local_ipv4=""
 									continue
 								fi
 							fi
 						fi
-						if [ "$just_get_status" == "false" ];then
+						if [ x"$just_get_status" = x"false" ];then
 							if [ -n "$local_ipv4" ];then
 								dns_record_content=`echo "$tmp_record" | $jq_path -r .content | grep -oE "$ipv4_regex"`
 								if [ -z "$dns_record_content" ];then
@@ -1466,18 +1418,18 @@ do_start(){
 								continue
 							fi
 						fi
-					elif [ "$dns_record_type" == "AAAA" ];then
+					elif [ x"$dns_record_type" = x"AAAA" ];then
 						if [ $try_get_ipv6 -eq 0 ];then
 							get_local_ip 6
 							res=$?
-							if [ "$just_get_status" == "false" ];then
+							if [ x"$just_get_status" = x"false" ];then
 								if [ $res -ne 0 ];then
 									local_ipv6=""
 									continue
 								fi
 							fi
 						fi
-						if [ "$just_get_status" == "false" ];then
+						if [ x"$just_get_status" = x"false" ];then
 							if [ -n "$local_ipv6" ];then
 								dns_record_content=`echo "$tmp_record" | $jq_path -r .content | grep -oE "$ipv6_regex"`
 								if [ -z "$dns_record_content" ];then
@@ -1493,26 +1445,26 @@ do_start(){
 						continue
 					fi
 					cf_record_type=$dns_record_type
-					if [ "$just_get_status" == "false" ];then
+					if [ x"$just_get_status" = x"false" ];then
 						dns_record_ttl=`echo "$tmp_record" | $jq_path -r .ttl`
 						if [ $dns_record_ttl -ne 1 -a $dns_record_ttl -ne 120 -a $dns_record_ttl -ne 300 -a $dns_record_ttl -ne 600 -a $dns_record_ttl -ne 900 -a $dns_record_ttl -ne 1800 -a $dns_record_ttl -ne 3600 -a $dns_record_ttl -ne 7200 -a $dns_record_ttl -ne 18000 -a $dns_record_ttl -ne 43200 -a $dns_record_ttl -ne 86400 ];then
 							dns_record_ttl=1
 						fi
 						dns_record_proxied=`echo "$tmp_record" | $jq_path -r .proxied`
-						if [ "$dns_record_proxied" != "true" ];then
+						if [ x"$dns_record_proxied" != x"true" ];then
 							dns_record_proxied=false
 						fi
 						
 						auto_create_record=`echo "$tmp_record" | $jq_path -r .auto_create_record`
-						if [ "$auto_create_record" == "null" ];then
+						if [ x"$auto_create_record" = x"null" ];then
 							auto_create_record=$g_auto_create_record
-						elif [ "$auto_create_record" != "false" ];then
+						elif [ x"$auto_create_record" != x"false" ];then
 							auto_create_record=true
 						fi
 						auto_delete_redundant_records=`echo "$tmp_record" | $jq_path -r .auto_delete_redundant_records`
-						if [ "$auto_delete_redundant_records" == "null" ];then
+						if [ x"$auto_delete_redundant_records" = x"null" ];then
 							auto_delete_redundant_records=$g_auto_delete_redundant_records
-						elif [ "$auto_delete_redundant_records" != "true" ];then
+						elif [ x"$auto_delete_redundant_records" != x"true" ];then
 							auto_delete_redundant_records=false
 						fi
 						
@@ -1545,7 +1497,7 @@ do_start(){
 								break
 							fi
 						fi
-						if [ "$just_get_status" == "true" ];then
+						if [ x"$just_get_status" = x"true" ];then
 							if [ -n "$zone_id" -a $verify_zone -eq -1 ];then
 								verify_zone_info
 								res=$?
@@ -1572,16 +1524,16 @@ do_start(){
 #echo 'debug cf_record_ttl = '"$cf_record_ttl"
 #echo 'debug dns_record_proxied = '"$dns_record_proxied"
 #echo 'debug cf_record_proxied = '"$cf_record_proxied"
-					if [ $res -eq 2 -o "$just_get_status" == "true" ];then
+					if [ $res -eq 2 -o x"$just_get_status" = x"true" ];then
 						:
-					elif [ "$dns_record_content" != "$cf_record_content" -o $dns_record_ttl -ne $cf_record_ttl -o "$dns_record_proxied" != "$cf_record_proxied" ];then
+					elif [ x"$dns_record_content" != x"$cf_record_content" -o $dns_record_ttl -ne $cf_record_ttl -o x"$dns_record_proxied" != x"$cf_record_proxied" ];then
 						echo_date '"Content/TTL/proxied" on Cloudflare is different from the local, updating type "'"$dns_record_type"'" records for "'"$dns_record_full_name"'"'
-						echo_date 'dns_record_content = "'"$dns_record_content"'"'
-						echo_date 'cf_record_content = "'"$cf_record_content"'"'
-						echo_date 'dns_record_ttl = "'"$dns_record_ttl"'"'
-						echo_date 'cf_record_ttl = "'"$cf_record_ttl"'"'
-						echo_date 'dns_record_proxied = "'"$dns_record_proxied"'"'
-						echo_date 'cf_record_proxied = "'"$cf_record_proxied"'"'
+#echo_date 'dns_record_content = "'"$dns_record_content"'"'
+#echo_date 'cf_record_content = "'"$cf_record_content"'"'
+#echo_date 'dns_record_ttl = "'"$dns_record_ttl"'"'
+#echo_date 'cf_record_ttl = "'"$cf_record_ttl"'"'
+#echo_date 'dns_record_proxied = "'"$dns_record_proxied"'"'
+#echo_date 'cf_record_proxied = "'"$cf_record_proxied"'"'
 						if [ $verify_account -eq -1 ];then
 							verify_user_info
 							res=$?
@@ -1593,9 +1545,9 @@ do_start(){
 						for try_times in 0 1 2 3
 						do
 							if [ $try_times -gt 0 ];then
-								echo_date Retry in 10 seconds
+								echo_date 'Retry in 10 seconds'
 								sleep 10
-								echo_date Retry...$try_times
+								echo_date 'Retry...'"$try_times"
 							fi
 							update_dns_record
 							res=$?
@@ -1696,6 +1648,6 @@ status)
 	;;
 *)
 	echo usage:
-	echo -e "\t"$0 start/stop
+	echo '    '$0 start/stop
 	;;
 esac

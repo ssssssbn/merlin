@@ -27,7 +27,7 @@ eval `dbus export cfddns`
 dir=$(dirname $0)
 cd $dir
 
-jq_path='/koolshare/bin/jq'
+jq_path="`which jq`"
 LOG_FILE="$tmp_dir"'/cfddns_log.log'
 STATUS_FILE="$tmp_dir"'/cfddns_status.json'
 STATUS_FILE_SHOW="$tmp_dir"'/cfddns_status_show.json'
@@ -37,11 +37,16 @@ readonly STATUS_FILE
 readonly STATUS_FILE_SHOW
 readonly CACHE_FILE
 
-if [ "$cfddns_enable" == "true" ];then
+if [ x"$cfddns_enable" = x"true" ];then
 	rm -rf $LOG_FILE
 fi
 
 echo_date '脚本运行，如需变更设置，请等待脚本运行完毕，否则变更可能不会生效！' >> $LOG_FILE
+if [ -z "$jq_path" ];then
+	echo_date '缺少依赖包"jq"'
+	rm -rf $LOCK_FILE
+	exit 0
+fi
 startup=false
 if [ "$1" == 'startup' ];then
 	startup=true
@@ -58,13 +63,13 @@ crontab_task=`cru l | grep cf_ddns_synctask`
 #echo debug crontab_task = "$crontab_task" >> $LOG_FILE
 startup_cmd=$(cat /jffs/scripts/wan-start | grep "/koolshare/scripts/cfddns_run.sh")
 
-if [ "$cfddns_enable" == "true" ];then
+if [ x"$cfddns_enable" = x"true" ];then
 	config='{"user":{"email":"'"$cfddns_user_email"'","global_api_key":"'"$cfddns_global_api_key"'"},"auto_create_zone":true,"auto_create_zone_jump_start":false,"auto_create_zone_type":"full","auto_create_record":true,"auto_delete_redundant_records":false,"domains":[{"root_domain_name":"'"$cfddns_root_domain_name"'","auto_create_zone":'"$cfddns_auto_create_zone"',"auto_create_zone_jump_start":'"$cfddns_auto_create_zone_jump_start"',"auto_create_zone_type":"'"$cfddns_auto_create_zone_type"'","hosts":[{"subdomain_name_prefix":"'"$cfddns_subdomain_name_prefix"'","records":['
-	if [ "$cfddns_update_object" == "ipv4" ];then
+	if [ x"$cfddns_update_object" = x"ipv4" ];then
 		config="$config"'{"type":"A","content":"'"$cfddns_ipv4_content"'","ttl":'"$cfddns_ipv4_ttl"',"proxied":'"$cfddns_ipv4_proxied"',"auto_create_record":'"$cfddns_ipv4_auto_create_record"',"auto_delete_redundant_records":'"$cfddns_ipv4_auto_delete_redundant_records"'}'
-	elif [ "$cfddns_update_object" == "ipv6" ];then
+	elif [ x"$cfddns_update_object" = x"ipv6" ];then
 		config="$config"'{"type":"AAAA","content":"'"$cfddns_ipv6_content"'","ttl":'"$cfddns_ipv6_ttl"',"proxied":'"$cfddns_ipv6_proxied"',"auto_create_record":'"$cfddns_ipv6_auto_create_record"',"auto_delete_redundant_records":'"$cfddns_ipv6_auto_delete_redundant_records"'}'
-	elif [ "$cfddns_update_object" == "both" ];then
+	elif [ x"$cfddns_update_object" = x"both" ];then
 		config="$config"'{"type":"A","content":"'"$cfddns_ipv4_content"'","ttl":'"$cfddns_ipv4_ttl"',"proxied":'"$cfddns_ipv4_proxied"',"auto_create_record":'"$cfddns_ipv4_auto_create_record"',"auto_delete_redundant_records":'"$cfddns_ipv4_auto_delete_redundant_records"'},{"type":"AAAA","content":"'"$cfddns_ipv6_content"'","ttl":'"$cfddns_ipv6_ttl"',"proxied":'"$cfddns_ipv6_proxied"',"auto_create_record":'"$cfddns_ipv6_auto_create_record"',"auto_delete_redundant_records":'"$cfddns_ipv6_auto_delete_redundant_records"'}'
 	fi
 	config="$config"']}]}],"get_ipv4_cmd":"'${cfddns_get_ipv4_cmd//\\/}'","get_ipv4_url":"'"$cfddns_get_ipv4_url"'","get_ipv6_cmd":"'${cfddns_get_ipv6_cmd//\\/}'","get_ipv6_url":"'"$cfddns_get_ipv6_url"'","check_interval":0}'
@@ -74,7 +79,7 @@ if [ "$cfddns_enable" == "true" ];then
 		echo "$config" | $jq_path . > /koolshare/configs/cfddns.json
 		echo_date '开启CFDDNS!!!' >> $LOG_FILE
 		echo "running" > $STATUS_FILE_SHOW
-		if [ "$startup" == "true" ];then
+		if [ x"$startup" = x"true" ];then
 			./cfddns.sh startup --jq="$jq_path" --config=/koolshare/configs/cfddns.json  >> $LOG_FILE
 		else
 			./cfddns.sh start --jq="$jq_path" --config=/koolshare/configs/cfddns.json >> $LOG_FILE
@@ -134,7 +139,7 @@ if [ "$cfddns_enable" == "true" ];then
 			else
 				crontab_task1="`echo "$crontab_task" | awk -F' #' '{print $1}'`"
 #echo debug crontab_task1 = "$crontab_task1" >> $LOG_FILE
-				if [ "$crontab_cmd" != "$crontab_task1" ];then
+				if [ x"$crontab_cmd" != x"$crontab_task1" ];then
 					echo_date '更新Crontab定时任务，每'"$cfddns_crontab_interval_min"'分钟'"$cfddns_crontab_interval_hour"'小时'"$cfddns_crontab_interval_day"'天检测一次。' >> $LOG_FILE
 					cru d cf_ddns_synctask
 					cru a cf_ddns_synctask "$crontab_cmd"
@@ -167,7 +172,7 @@ if [ "$cfddns_enable" == "true" ];then
 		fi
 		
 		echo_date '运行完毕!!!' >> $LOG_FILE
-		if [ "$startup" == "true" ];then
+		if [ x"$startup" = x"true" ];then
 			echo_date '---开机启动完成---' >> $LOG_FILE
 		fi
 		./cfddns_status.sh skip
@@ -175,7 +180,7 @@ if [ "$cfddns_enable" == "true" ];then
 		echo_date 'error to build configuration, ask for help' >> $LOG_FILE
 	fi
 else
-	if [ "$startup" == "true" ];then
+	if [ x"$startup" = x"true" ];then
 		logger "[软件中心]: CFDDNS插件未启用，不启动！"
 	else
 		echo_date '关闭CFDDNS' >> $LOG_FILE
